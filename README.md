@@ -9,25 +9,23 @@ This library is a promise-based JS wrapper for interacting with the Duolingo API
 const Duolingo = require('duolingo');
 
 let duo = new Duolingo({
-	username: '<username>'
-	password: '<password>'
-});
-
-duo.login(
-).then(() => {
-	return duo.getPurchasedItems();
-}).then((body) => {
-	
-	// do something with the data
-
-}).then(() => {
-	return duo.logout();
-}).catch((err) => {
-	console.error(err);
+  username: <username>,
+  password: <password>
 })
+
+duo.login()
+  .then(() => {
+    return duo.getPurchasedItems()
+  }).then((items) => {
+    console.log(JSON.stringify(items, null, 2))
+  }).then(() => {
+    return duo.logout()
+  }).catch((err) => {
+    console.error(err)
+  })
 ```
 
-Further usage samples can be found in /examples.
+Further usage examples can be found in /examples.
 
 ## Available Methods
 - login
