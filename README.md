@@ -18,7 +18,6 @@ duo.login()
     return duo.getPurchasedItems()
   }).then((items) => {
     console.log(JSON.stringify(items, null, 2))
-  }).then(() => {
     return duo.logout()
   }).catch((err) => {
     console.error(err)
