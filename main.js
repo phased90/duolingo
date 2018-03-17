@@ -1,5 +1,5 @@
 const request = require('request-promise')
-const jwt = require('jsonwebtoken')
+// const jwt = require('jsonwebtoken')
 const utils = require('./utils')
 
 function DuoLingo (options) {
@@ -7,7 +7,7 @@ function DuoLingo (options) {
   this.username = username || ``
   this.password = password || ``
   this.loggedIn = false
-  this.id = ``
+  this.user_id = ``
   this.rp = request.defaults({
     jar: true, // want to store cookies
     simple: false // want to handle non 2xx responses
@@ -21,7 +21,8 @@ DuoLingo.prototype.login2 = function () {
   if (this.username === `` || this.password === ``) {
     return Promise.reject(new Error(`You must provide login credentials!`))
   } else if (this.loggedIn) {
-    return Promise.reject(new Error(`You are already logged in!`))
+    console.log('You are already logged in')
+    return Promise.resolve(true)
   }
 
   return this.post(
@@ -31,13 +32,41 @@ DuoLingo.prototype.login2 = function () {
       password: this.password
     }
   )
+    .then((res) => {
+      if (res.code === 201) {
+        this.loggedIn = true
+        return Promise.resolve(true)
+      } else {
+        this.loggedIn = false
+        return Promise.resolve(false)
+      }
+    })
+    .catch((error) => {
+      return Promise.reject(error)
+    })
 }
 
 DuoLingo.prototype.getUserInfo = function () {
-  return this.post(
+  // TODO: allow selection of specific fields
+  if (!this.user_id || !this.loggedIn) {
+    return Promise.reject(new Error('You must be logged in!'))
+  }
+
+  return this.get(
     `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=adsEnabled,bio,blockedUserIds,canUseModerationTools,courses,creationDate,currentCourse,email,emailAnnouncement,emailAssignment,emailAssignmentComplete,emailClassroomJoin,emailClassroomLeave,emailComment,emailEditSuggested,emailFollow,emailPass,emailWeeklyProgressReport,emailSchoolsAnnouncement,emailStreamPost,emailVerified,emailWeeklyReport,enableMicrophone,enableSoundEffects,enableSpeaker,experiments,facebookId,fromLanguage,globalAmbassadorStatus,googleId,hasPlus,id,joinedClassroomIds,learningLanguage,lingots,location,monthlyXp,name,observedClassroomIds,persistentNotifications,picture,plusDiscounts,practiceReminderSettings,privacySettings,roles,streak,timezone,timezoneOffset,totalXp,trackingProperties,username,webNotificationIds,weeklyXp,xpGains,xpGoal,zhTw,_achievements&_=${Date.now()}`,
     {}
   )
+    .then((res) => {
+      if (res.code === 200) {
+        this.userInfo = res.data
+        return Promise.resolve(res.data)
+      } else {
+        return Promise.resolve(res)
+      }
+    })
+    .catch((error) => {
+      return Promise.reject(error)
+    })
 }
 
 /*
@@ -51,28 +80,27 @@ DuoLingo.prototype.login = function () {
     return Promise.reject(new Error(`You are already logged in!`))
   }
 
-  let options = {
-    method: `POST`,
-    uri: 'https://www.duolingo.com/login',
-    body: {
+  return this.post(
+    'https://www.duolingo.com/login',
+    {
       login: this.username,
       password: this.password
-    },
-    json: true,
-    resolveWithFullResponse: true
-  }
-
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 200) {
-      this.loggedIn = true
-      this.user_id = res.body.user_id
-      return Promise.resolve(res.body)
-    } else {
-      return Promise.reject(new Error(`login returned with code ${res.statusCode}`))
     }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  )
+    .then((res) => {
+      if (res.code === 200) {
+        this.loggedIn = true
+        this.user_id = res.data.user_id
+        return Promise.resolve(this.user_id)
+      } else {
+        this.loggedIn = false
+        this.user_id = null
+        return Promise.resolve(null)
+      }
+    })
+    .catch((error) => {
+      return Promise.reject(error)
+    })
 }
 
 /*

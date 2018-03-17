@@ -1,23 +1,19 @@
 let utils = {
-  post: function (uri, data) {
-    data = data || {}
+  post: function (uri, body) {
+    body = body || {}
     let options = {
-      method: data ? 'POST' : 'GET',
+      method: 'POST',
       uri,
-      data,
+      body,
       json: true,
       resolveWithFullResponse: true
     }
 
     return this.rp(options).then((res) => {
-      if (res.statusCode === 201) {
-        let body = Object.keys(res.body).length ? JSON.parse(res.body) : {}
-        return Promise.resolve(body)
-      } else {
-        return Promise.reject(new Error(`POST to ${uri} returned ${res.statusCode}`))
-      }
-    }).catch((err) => {
-      return Promise.reject(err)
+      return Promise.resolve({
+        code: res.statusCode,
+        data: res.body
+      })
     })
   },
 
