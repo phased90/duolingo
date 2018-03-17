@@ -1,5 +1,6 @@
 const request = require('request-promise')
 const jwt = require('jsonwebtoken')
+const utils = require('./utils')
 
 function DuoLingo (options) {
   let { username, password } = options || {}
@@ -11,18 +12,10 @@ function DuoLingo (options) {
     jar: true, // want to store cookies
     simple: false // want to handle non 2xx responses
   })
-}
 
-// DuoLingo.prototype.loginFlow = function () {
-//   this.login2()
-//     .then((res) => {
-//       let options = {
-//         method: `GET`,
-//         uri: `https://www.duolingo.com/2017-06-30/config?_=${Date.now()}`,
-//         resolveWithFullResponse: true
-//       }
-//     })
-// }
+  this.post = utils.post.bind(this)
+  this.get = utils.get.bind(this)
+}
 
 DuoLingo.prototype.login2 = function () {
   if (this.username === `` || this.password === ``) {
@@ -31,50 +24,20 @@ DuoLingo.prototype.login2 = function () {
     return Promise.reject(new Error(`You are already logged in!`))
   }
 
-  let options = {
-    method: `POST`,
-    uri: `https://www.duolingo.com/2016-04-13/login?fields=`,
-    body: {
+  return this.post(
+    'https://www.duolingo.com/2016-04-13/login?fields=',
+    {
       identifier: this.username,
       password: this.password
-    },
-    json: true,
-    resolveWithFullResponse: true
-  }
-
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 201) {
-      this.loggedIn = true
-      let token = res.headers.jwt
-      this.user_id = jwt.decode(token).sub
-      let body = Object.keys(res.body).length ? JSON.parse(res.body) : {}
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(new Error(`login2 returned with code ${res.statusCode}`))
     }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  )
 }
 
 DuoLingo.prototype.getUserInfo = function () {
-  let options = {
-    method: `POST`,
-    uri: `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=adsEnabled,bio,blockedUserIds,canUseModerationTools,courses,creationDate,currentCourse,email,emailAnnouncement,emailAssignment,emailAssignmentComplete,emailClassroomJoin,emailClassroomLeave,emailComment,emailEditSuggested,emailFollow,emailPass,emailWeeklyProgressReport,emailSchoolsAnnouncement,emailStreamPost,emailVerified,emailWeeklyReport,enableMicrophone,enableSoundEffects,enableSpeaker,experiments,facebookId,fromLanguage,globalAmbassadorStatus,googleId,hasPlus,id,joinedClassroomIds,learningLanguage,lingots,location,monthlyXp,name,observedClassroomIds,persistentNotifications,picture,plusDiscounts,practiceReminderSettings,privacySettings,roles,streak,timezone,timezoneOffset,totalXp,trackingProperties,username,webNotificationIds,weeklyXp,xpGains,xpGoal,zhTw,_achievements&_=${Date.now()}`,
-    json: true,
-    resolveWithFullResponse: true
-  }
-
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 201) {
-      let body = Object.keys(res.body).length ? JSON.parse(res.body) : {}
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(new Error(`getUserInfo returned with code ${res.statusCode}`))
-    }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  return this.post(
+    `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=adsEnabled,bio,blockedUserIds,canUseModerationTools,courses,creationDate,currentCourse,email,emailAnnouncement,emailAssignment,emailAssignmentComplete,emailClassroomJoin,emailClassroomLeave,emailComment,emailEditSuggested,emailFollow,emailPass,emailWeeklyProgressReport,emailSchoolsAnnouncement,emailStreamPost,emailVerified,emailWeeklyReport,enableMicrophone,enableSoundEffects,enableSpeaker,experiments,facebookId,fromLanguage,globalAmbassadorStatus,googleId,hasPlus,id,joinedClassroomIds,learningLanguage,lingots,location,monthlyXp,name,observedClassroomIds,persistentNotifications,picture,plusDiscounts,practiceReminderSettings,privacySettings,roles,streak,timezone,timezoneOffset,totalXp,trackingProperties,username,webNotificationIds,weeklyXp,xpGains,xpGoal,zhTw,_achievements&_=${Date.now()}`,
+    {}
+  )
 }
 
 /*
