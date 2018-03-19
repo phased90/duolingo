@@ -162,7 +162,7 @@ DuoLingo.prototype.getSubscriptions = function () {
   let timestamp = Date.now()
 
   return this.get(
-    `https://www.duolingo.com/2017-06-30/users/${this.user_id}/subscriptions?_=${timestamp}`,
+    `https://www.duolingo.com/2017-06-30/users/${this.user_id}/subscriptions?_=${timestamp}`
   )
     .then((res) => {
       if (res.code === 200) {
@@ -187,7 +187,7 @@ DuoLingo.prototype.getPurchasedItems = function () {
   let timestamp = Date.now()
 
   return this.get(
-    `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=shopItems&_=${timestamp}`,
+    `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=shopItems&_=${timestamp}`
   )
     .then((res) => {
       if (res.status === 200) {
@@ -243,7 +243,7 @@ DuoLingo.prototype.purchaseItem = function (item, lang) {
       if (res.code === 200) {
         return Promise.resolve(JSON.parse(res.data))
       } else {
-        return Promsie.resolve(false)
+        return Promise.resolve(false)
       }
     })
     .catch((err) => {
