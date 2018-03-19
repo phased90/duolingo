@@ -48,8 +48,8 @@ DuoLingo.prototype.login2 = function () {
 
 DuoLingo.prototype.getUserInfo = function () {
   // TODO: allow selection of specific fields
-  if (!this.user_id || !this.loggedIn) {
-    return Promise.reject(new Error('You must be logged in!'))
+  if (!this.loggedIn || !this.user_id) {
+    return Promise.reject(new Error(`<getUserInfo You must be logged in!`))
   }
 
   return this.get(
@@ -108,25 +108,24 @@ DuoLingo.prototype.login = function () {
 */
 DuoLingo.prototype.logout = function () {
   if (!this.loggedIn) {
-    return Promise.reject(new Error(`You aren't logged in!`))
+    return Promise.reject(new Error(`<logout> You must be logged in!`))
   }
 
-  let options = {
-    method: `POST`,
-    uri: 'https://www.duolingo.com/logout',
-    resolveWithFullResponse: true
-  }
-
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 302) {
-      this.loggedIn = false
-      return Promise.resolve(res.body)
-    } else {
-      return Promise.reject(new Error(`logout returned with code ${res.statusCode}`))
-    }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  return this.post(
+    'https://www.duolingo.com/logout',
+    {}
+  )
+    .then((res) => {
+      if (res.code === 302) {
+        this.loggedIn = false
+        return Promise.resolve(true)
+      } else {
+        return Promise.resolve(false)
+      }
+    })
+    .catch((err) => {
+      return Promise.reject(err)
+    })
 }
 
 /*
@@ -134,25 +133,22 @@ DuoLingo.prototype.logout = function () {
 */
 DuoLingo.prototype.getNotifications = function () {
   if (!this.loggedIn) {
-    return Promise.reject(new Error(`You must be logged in!`))
+    return Promise.reject(new Error(`<getNotifications> You must be logged in!`))
   }
 
-  let options = {
-    method: `GET`,
-    uri: `https://www.duolingo.com/notifications?_=${Date.now()}`,
-    resolveWithFullResponse: true
-  }
+  let timestamp = Date.now()
 
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 200) {
-      let body = JSON.parse(res.body)
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(new Error(`getNotifications returned with code ${res.statusCode}`))
-    }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  return this.get(`https://www.duolingo.com/notifications?_=${timestamp}`)
+    .then((res) => {
+      if (res.code === 200) {
+        return Promise.resolve(JSON.parse(res.data))
+      } else {
+        return Promise.resolve(false)
+      }
+    })
+    .catch((err) => {
+      Promise.reject(err)
+    })
 }
 
 /*
@@ -160,25 +156,24 @@ DuoLingo.prototype.getNotifications = function () {
 */
 DuoLingo.prototype.getSubscriptions = function () {
   if (!this.loggedIn) {
-    return Promise.reject(new Error(`You must be logged in!`))
+    return Promise.reject(new Error(`<getSubscriptions> You must be logged in!`))
   }
 
-  let options = {
-    method: `GET`,
-    uri: `https://www.duolingo.com/2017-06-30/users/${this.user_id}/subscriptions?_=${Date.now()}`,
-    resolveWithFullResponse: true
-  }
+  let timestamp = Date.now()
 
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 200) {
-      let body = JSON.parse(res.body)
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(res.statusCode)
-    }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  return this.get(
+    `https://www.duolingo.com/2017-06-30/users/${this.user_id}/subscriptions?_=${timestamp}`,
+  )
+    .then((res) => {
+      if (res.code === 200) {
+        return Promise.resolve(JSON.parse(res.data))
+      } else {
+        return Promise.resolve(false)
+      }
+    })
+    .catch((err) => {
+      return Promise.reject(err)
+    })
 }
 
 /*
@@ -186,73 +181,74 @@ DuoLingo.prototype.getSubscriptions = function () {
  */
 DuoLingo.prototype.getPurchasedItems = function () {
   if (!this.loggedIn) {
-    return Promise.reject(new Error(`getPurchasedItems: You must be logged in!`))
+    return Promise.reject(new Error(`<getPurchasedItems> You must be logged in!`))
   }
 
-  let options = {
-    method: `GET`,
-    uri: `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=shopItems&_=${Date.now()}`,
-    resolveWithFullResponse: true
-  }
+  let timestamp = Date.now()
 
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 200) {
-      let body = JSON.parse(res.body)
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(new Error(`getPurchasedItems returned with code ${res.statusCode}`))
-    }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  return this.get(
+    `https://www.duolingo.com/2017-06-30/users/${this.user_id}?fields=shopItems&_=${timestamp}`,
+  )
+    .then((res) => {
+      if (res.status === 200) {
+        return Promise.resolve(JSON.parse(res.data))
+      } else {
+        return Promise.resolve(false)
+      }
+    })
+    .catch((err) => {
+      Promise.reject(err)
+    })
 }
 
 /*
   List the items in the shop (cannot all necessarily be purchased)
 */
 DuoLingo.prototype.getShopItems = function () {
-  let options = {
-    method: `GET`,
-    uri: `https://www.duolingo.com/api/1/store/get_items?_=${Date.now()}`,
-    resolveWithFullResponse: true
+  if (!this.loggedIn) {
+    return Promise.reject(new Error(`<getShopItems> You must be logged in!`))
   }
 
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 200) {
-      let body = JSON.parse(res.body)
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(new Error(`getShopItems returned with code ${res.statusCode}`))
-    }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  let timestamp = Date.now()
+
+  return this.get(`https://www.duolingo.com/api/1/store/get_items?_=${timestamp}`)
+    .then((res) => {
+      if (res.code === 200) {
+        return Promise.resolve(JSON.parse(res.data))
+      } else {
+        return Promise.resolve(false)
+      }
+    })
+    .catch((err) => {
+      return Promise.reject(err)
+    })
 }
 
 /*
   Purchase the selected item, by item and language
 */
 DuoLingo.prototype.purchaseItem = function (item, lang) {
-  let options = {
-    method: `POST`,
-    uri: `https://www.duolingo.com/2017-06-30/users/${this.user_id}/purchase-store-item`,
-    body: {
-      name: item,
-      learningLanguage: lang
-    },
-    json: true,
-    resolveWithFullResponse: true
+  if (!this.loggedIn) {
+    return Promise.reject(new Error(`<purchaseItem> You must be logged in!`))
   }
 
-  return this.rp(options).then((res) => {
-    if (res.statusCode === 200) {
-      let body = JSON.parse(res.body)
-      return Promise.resolve(body)
-    } else {
-      return Promise.reject(res.statusCode)
+  return this.post(
+    `https://www.duolingo.com/2017-06-30/users/${this.user_id}/purchase-store-item`,
+    {
+      name: item,
+      learningLanguage: lang
     }
-  }).catch((err) => {
-    return Promise.reject(err)
-  })
+  )
+    .then((res) => {
+      if (res.code === 200) {
+        return Promise.resolve(JSON.parse(res.data))
+      } else {
+        return Promsie.resolve(false)
+      }
+    })
+    .catch((err) => {
+      return Promise.reject(err)
+    })
 }
+
 module.exports = DuoLingo
