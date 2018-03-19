@@ -25,14 +25,10 @@ let utils = {
     }
 
     return this.rp(options).then((res) => {
-      if (res.statusCode === 200) {
-        let body = JSON.parse(res.body)
-        return Promise.resolve(body)
-      } else {
-        return Promise.reject(new Error(`GET to ${uri} returned ${res.statusCode}`))
-      }
-    }).catch((err) => {
-      return Promise.reject(err)
+      return Promise.resolve({
+        code: res.statusCode,
+        data: res.body
+      })
     })
   }
 }
